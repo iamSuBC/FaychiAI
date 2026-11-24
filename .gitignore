@@ -1,0 +1,14 @@
+# 不上传的素材（按需求排除）
+Gemini_Generated_Image_*.jpeg
+净览AI - 智能内容过滤插件创业计划书.pptx
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 依赖与构建产物
+node_modules/
+dist/
+*.log
+.env
+.env.local
