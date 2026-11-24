@@ -49,30 +49,50 @@ async function classify(msg) {
   const ai = msg.ai || {};
   if (!ai.enabled || !ai.apiKey) return { matched: [], skipped: 'ai-not-configured' };
 
-  const rules = (msg.rules || []).map(function (r) { return r.pattern; }).filter(Boolean);
+  const rules = (msg.rules || []).filter(function (r) { return r && r.pattern; });
   const texts = msg.texts || [];
   if (!rules.length || !texts.length) return { matched: [] };
 
+  const ruleLines = rules.map(function (r, i) {
+    const typeLabel = r.type === 'spoiler' ? '剧透屏蔽' : 'AI 语义';
+    const aliasStr = (r.aliases && r.aliases.length) ? '（别名：' + r.aliases.join('、') + '）' : '';
+    return (i + 1) + '. [' + typeLabel + '] ' + r.pattern + aliasStr;
+  });
+
   const content = await chat(ai, [
-    { role: 'system', content: '你是 FaychiAI 的内容过滤引擎，负责判断中文内容是否命中用户的屏蔽规则。' },
+    { role: 'system', content: '你是 FaychiAI 的内容过滤引擎，严格按规则判断，禁止联想和扩大范围。' },
     {
       role: 'user',
       content:
-        '屏蔽规则：\n' + rules.map(function (r, i) { return (i + 1) + '. ' + r; }).join('\n') +
-        '\n\n待判定文本：\n' + texts.map(function (t, i) { return '[' + i + '] ' + t; }).join('\n') +
-        '\n\n请对每条文本做语义级判断（允许同义、暗喻、指代），判断是否命中任意规则。' +
-        '严格只输出 JSON：{"matched":[命中文本的序号]}'
+        '规则说明：\n' +
+        '- 【AI 语义】：文本必须明确提及规则所指的人/事/物/概念才算命中；同义、暗喻、指代可算，但必须有明确关联，禁止猜测。\n' +
+        '- 【剧透屏蔽】：文本必须揭示该作品的具体剧情（结局、人物死亡、重大反转、关键情节）才算命中；仅提及作品名、角色名、评分、出版信息、求推荐、无具体剧情的讨论不算剧透。\n\n' +
+        '规则：\n' + ruleLines.join('\n') + '\n\n' +
+        '待判定文本：\n' + texts.map(function (t, i) { return '[' + i + '] ' + t; }).join('\n') + '\n\n' +
+        '对每条文本判断命中了哪些规则（命中规则序号从 1 开始）。未命中则 matched 为空数组。\n' +
+        '严格只输出 JSON，不要任何解释：{"results":[{"idx":0,"matched":[1]}]}'
     }
   ]);
 
-  let matched = [];
+  let results = [];
   try {
     const parsed = JSON.parse(content);
-    matched = Array.isArray(parsed) ? parsed : (parsed.matched || []);
-  } catch (e) { /* 解析失败则不屏蔽 */ }
-  matched = (matched || []).map(Number).filter(function (x) {
-    return Number.isInteger(x) && x >= 0 && x < texts.length;
+    results = Array.isArray(parsed) ? parsed : (parsed.results || []);
+  } catch (e) { return { matched: [] }; }
+
+  const matched = [];
+  results.forEach(function (r) {
+    const idx = Number(r && r.idx);
+    const m = Array.isArray(r && r.matched) ? r.matched : [];
+    if (!Number.isInteger(idx) || idx < 0 || idx >= texts.length) return;
+    m.forEach(function (ruleNo) {
+      const ruleIdx = Number(ruleNo) - 1;
+      const rule = rules[ruleIdx];
+      if (!rule) return;
+      matched.push({ idx: idx, strength: rule.strength || null });
+    });
   });
+
   return { matched: matched };
 }
 

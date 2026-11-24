@@ -56,8 +56,14 @@
         try {
           regexRules.push({ re: new RegExp(r.pattern, 'i'), strength: strength });
         } catch (e) { /* 无效正则忽略 */ }
-      } else if (r.type === 'ai') {
-        aiRules.push({ pattern: r.pattern, strength: strength });
+      } else if (r.type === 'ai' || r.type === 'spoiler') {
+        const terms = [r.pattern].concat(r.aliases || []).map(function (t) {
+          return String(t).toLowerCase();
+        }).filter(Boolean);
+        aiRules.push({
+          type: r.type, pattern: r.pattern,
+          aliases: r.aliases || [], terms: terms, strength: strength
+        });
       } else {
         keywordRules.push({ kw: String(r.pattern).toLowerCase(), strength: strength });
       }
@@ -120,9 +126,15 @@
         if (aiRules.length) {
           const t = text.trim();
           if (t.length >= 2 && t.length <= 300 && !seen.has(t)) {
-            seen.add(t);
-            aiCandidates.push({ target: target, text: t });
-            if (aiCandidates.length >= MAX_AI_BATCH) break;
+            const lower = t.toLowerCase();
+            const hit = aiRules.some(function (r) {
+              return r.terms.some(function (term) { return lower.indexOf(term) !== -1; });
+            });
+            if (hit) {
+              seen.add(t);
+              aiCandidates.push({ target: target, text: t });
+              if (aiCandidates.length >= MAX_AI_BATCH) break;
+            }
           }
         }
       }
@@ -197,23 +209,33 @@
       const resp = await sendMessage({
         type: 'ai-classify',
         texts: pending,
-        rules: aiRules.map(function (r) { return { pattern: r.pattern }; }),
+        rules: aiRules.map(function (r) {
+          return { type: r.type, pattern: r.pattern, aliases: r.aliases, strength: r.strength };
+        }),
         ai: settings.ai
       });
-      const matched = new Set((resp && resp.matched) || []);
+      const matched = (resp && resp.matched) || [];
+      const order = { light: 0, medium: 1, heavy: 2 };
+      const hitMap = new Map();
+      matched.forEach(function (m) {
+        if (!m || !Number.isInteger(m.idx)) return;
+        const cur = hitMap.get(m.idx);
+        const s = m.strength || settings.defaultStrength;
+        if (!cur || order[s] > order[cur]) hitMap.set(m.idx, s);
+      });
       pending.forEach(function (t, idx) {
-        const hit = matched.has(idx);
-        aiCache.set(aiKey(t), hit);
-        decided.set(t, hit);
+        const strength = hitMap.get(idx) || null;
+        aiCache.set(aiKey(t), strength);
+        decided.set(t, strength);
       });
     }
 
-    decided.forEach(function (hit, text) {
-      if (!hit) return;
+    decided.forEach(function (strength, text) {
+      if (!strength) return;
       const targets = groups.get(text) || [];
       targets.forEach(function (el) {
         if (el && el.isConnected && !el.hasAttribute('data-faychi-owned')) {
-          applyMask(el, settings.defaultStrength);
+          applyMask(el, strength);
         }
       });
     });

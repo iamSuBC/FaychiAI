@@ -10,6 +10,8 @@
   const elNewType = $('newType');
   const elNewPattern = $('newPattern');
   const elNewStrength = $('newStrength');
+  const elNewAliases = $('newAliases');
+  const elAliasesField = $('aliasesField');
   const elAdd = $('addBtn');
   const elRows = $('ruleRows');
   const elEmpty = $('empty');
@@ -43,6 +45,13 @@
     elNewPattern.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') addRule();
     });
+
+    function syncAliasesField() {
+      const show = elNewType.value === 'ai' || elNewType.value === 'spoiler';
+      elAliasesField.style.display = show ? 'flex' : 'none';
+    }
+    elNewType.addEventListener('change', syncAliasesField);
+    syncAliasesField();
 
     // AI 配置（失焦即保存）
     [elAiEnabled, elAiBaseUrl, elAiApiKey, elAiModel].forEach(function (el) {
@@ -132,6 +141,12 @@
         if (v && v !== rule.pattern) Storage.updateRule(rule.id, { pattern: v });
       });
       tdPattern.appendChild(pInput);
+      if (rule.aliases && rule.aliases.length) {
+        const ali = document.createElement('div');
+        ali.style.cssText = 'font-size:11.5px;color:#94a3b8;margin-top:3px;';
+        ali.textContent = '别名：' + rule.aliases.join('、');
+        tdPattern.appendChild(ali);
+      }
 
       // 强度
       const tdStrength = document.createElement('td');
@@ -171,12 +186,18 @@
   async function addRule() {
     const pattern = elNewPattern.value.trim();
     if (!pattern) return;
-    await Storage.addRule({
+    const rule = {
       type: elNewType.value,
       pattern: pattern,
       strength: elNewStrength.value || null
-    });
+    };
+    if (elNewType.value === 'ai' || elNewType.value === 'spoiler') {
+      const aliases = elNewAliases.value.trim();
+      if (aliases) rule.aliases = aliases.split(/[,，、\s]+/).filter(Boolean);
+    }
+    await Storage.addRule(rule);
     elNewPattern.value = '';
+    elNewAliases.value = '';
   }
 
   function saveAI() {

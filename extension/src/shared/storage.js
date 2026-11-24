@@ -42,6 +42,8 @@
       pattern: String(rule.pattern || '').trim(),
       strength: rule.strength || null,
       note: rule.note || '',
+      aliases: Array.isArray(rule.aliases) ? rule.aliases :
+        (rule.aliases ? String(rule.aliases).split(/[,，、\s]+/).filter(Boolean) : []),
       enabled: rule.enabled !== false,
       createdAt: rule.createdAt || Date.now()
     };
