@@ -55,22 +55,27 @@ async function classify(msg) {
 
   const ruleLines = rules.map(function (r, i) {
     const typeLabel = r.type === 'spoiler' ? '剧透屏蔽' : 'AI 语义';
-    const aliasStr = (r.aliases && r.aliases.length) ? '（别名：' + r.aliases.join('、') + '）' : '';
+    const aliasStr = (r.aliases && r.aliases.length) ? '（该作品的角色/专属词：' + r.aliases.join('、') + '，用于确认是哪部作品）' : '';
     return (i + 1) + '. [' + typeLabel + '] ' + r.pattern + aliasStr;
   });
 
   const content = await chat(ai, [
-    { role: 'system', content: '你是 FaychiAI 的内容过滤引擎，严格按规则判断，禁止联想和扩大范围。' },
+    { role: 'system', content: '你是 FaychiAI 的内容过滤引擎。严格按规则的类型分别判定，禁止联想和扩大范围。' },
     {
       role: 'user',
       content:
-        '规则说明：\n' +
-        '- 【AI 语义】：文本必须明确提及规则所指的人/事/物/概念才算命中；同义、暗喻、指代可算，但必须有明确关联，禁止猜测。\n' +
-        '- 【剧透屏蔽】：文本只要透露了该作品的剧情信息就算命中，包括剧情走向、结局、人物命运/生死、关键反转、重大伏笔、重要情节细节。\n' +
-        '  以下不算剧透：仅出现作品名或角色名、评分、出版/上映信息、求推荐、纯主观评价（如"很好看/太烂了"）而无任何剧情信息。\n\n' +
-        '规则：\n' + ruleLines.join('\n') + '\n\n' +
+        '对每条文本，判断它命中了哪些规则。规则分两类，判定标准不同：\n\n' +
+        '【AI 语义】：文本必须明确提及规则所指的人/事/物/概念才算命中；同义、暗喻、指代可算，但必须有明确关联，禁止猜测和扩大范围。\n\n' +
+        '【剧透屏蔽】：\n' +
+        '  什么算剧透：透露了该作品的剧情信息——结局走向、人物生死/命运、关键反转、重大伏笔、重要情节细节。\n' +
+        '  什么不算剧透（matched 必须为空）：\n' +
+        '    · 仅出现作品名、书名、标题、角色名，没有任何剧情信息；\n' +
+        '    · 评分、出版/上映信息、作者、出版社、价格、页数；\n' +
+        '    · 求推荐、纯主观评价（如“很好看/太烂了/神作”）而无剧情；\n' +
+        '    · 与该作品无关，只是碰巧出现相同字词（用别名/角色名判断是否同一作品）。\n\n' +
+        '规则（序号从 1 开始）：\n' + ruleLines.join('\n') + '\n\n' +
         '待判定文本：\n' + texts.map(function (t, i) { return '[' + i + '] ' + t; }).join('\n') + '\n\n' +
-        '逐条判断命中了哪些规则（规则序号从 1 开始）。命中则把序号放入数组，未命中则为空数组。\n' +
+        '对每条文本，把命中的规则序号放入 matched 数组，未命中则为空数组。\n' +
         '严格只输出如下 JSON，不要任何解释或代码块标记：\n' +
         '{"results":[{"idx":0,"matched":[1]},{"idx":1,"matched":[]}]}'
     }

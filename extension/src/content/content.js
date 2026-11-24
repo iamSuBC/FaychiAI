@@ -12,8 +12,9 @@
     'SPAN', 'A', 'EM', 'STRONG', 'B', 'I', 'U', 'S', 'SMALL', 'MARK', 'LABEL',
     'ABBR', 'CITE', 'Q', 'TIME', 'FONT', 'SUB', 'SUP', 'BDI', 'BDO'
   ]);
-  const MAX_SCAN_NODES = 6000;
-  const MAX_AI_BATCH = 30;
+  const MAX_SCAN_NODES = 12000;
+  const MAX_AI_BATCH = 50;
+  const MAX_AI_CANDIDATES = 500;
 
   let settings = null;
   let keywordRules = [];
@@ -123,7 +124,7 @@
           continue;
         }
 
-        if (aiRules.length && !queued.has(target)) {
+        if (aiRules.length && aiCandidates.length < MAX_AI_CANDIDATES && !queued.has(target)) {
           const block = normalizeSpace(target.textContent);
           if (block.length >= 2) {
             const lower = block.toLowerCase();
@@ -132,8 +133,7 @@
             });
             if (hasTerm) {
               queued.add(target);
-              aiCandidates.push({ target: target, text: block.slice(0, 500) });
-              if (aiCandidates.length >= MAX_AI_BATCH) break;
+              aiCandidates.push({ target: target, text: block.slice(0, 600) });
             }
           }
         }
@@ -205,13 +205,16 @@
       else pending.push(t);
     });
 
-    if (pending.length) {
+    const rulesPayload = aiRules.map(function (r) {
+      return { type: r.type, pattern: r.pattern, aliases: r.aliases, strength: r.strength };
+    });
+
+    for (let i = 0; i < pending.length; i += MAX_AI_BATCH) {
+      const chunk = pending.slice(i, i + MAX_AI_BATCH);
       const resp = await sendMessage({
         type: 'ai-classify',
-        texts: pending,
-        rules: aiRules.map(function (r) {
-          return { type: r.type, pattern: r.pattern, aliases: r.aliases, strength: r.strength };
-        }),
+        texts: chunk,
+        rules: rulesPayload,
         ai: settings.ai
       });
       const matched = (resp && resp.matched) || [];
@@ -223,8 +226,8 @@
         const s = m.strength || settings.defaultStrength;
         if (!cur || order[s] > order[cur]) hitMap.set(m.idx, s);
       });
-      pending.forEach(function (t, idx) {
-        const strength = hitMap.get(idx) || null;
+      chunk.forEach(function (t, localIdx) {
+        const strength = hitMap.get(localIdx) || null;
         aiCache.set(aiKey(t), strength);
         decided.set(t, strength);
       });
