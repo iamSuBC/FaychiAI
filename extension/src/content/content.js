@@ -100,7 +100,7 @@
     try {
       const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
       const aiCandidates = [];
-      const seen = new Set();
+      const queued = new Set();
       let node;
       let count = 0;
 
@@ -123,16 +123,16 @@
           continue;
         }
 
-        if (aiRules.length) {
-          const t = text.trim();
-          if (t.length >= 2 && t.length <= 300 && !seen.has(t)) {
-            const lower = t.toLowerCase();
-            const hit = aiRules.some(function (r) {
+        if (aiRules.length && !queued.has(target)) {
+          const block = normalizeSpace(target.textContent);
+          if (block.length >= 2) {
+            const lower = block.toLowerCase();
+            const hasTerm = aiRules.some(function (r) {
               return r.terms.some(function (term) { return lower.indexOf(term) !== -1; });
             });
-            if (hit) {
-              seen.add(t);
-              aiCandidates.push({ target: target, text: t });
+            if (hasTerm) {
+              queued.add(target);
+              aiCandidates.push({ target: target, text: block.slice(0, 500) });
               if (aiCandidates.length >= MAX_AI_BATCH) break;
             }
           }
@@ -361,6 +361,10 @@
   }
 
   // ---------- 工具 ----------
+
+  function normalizeSpace(s) {
+    return String(s || '').replace(/\s+/g, ' ').trim();
+  }
 
   function sendMessage(msg) {
     return new Promise(function (resolve) {

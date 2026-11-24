@@ -66,34 +66,89 @@ async function classify(msg) {
       content:
         '规则说明：\n' +
         '- 【AI 语义】：文本必须明确提及规则所指的人/事/物/概念才算命中；同义、暗喻、指代可算，但必须有明确关联，禁止猜测。\n' +
-        '- 【剧透屏蔽】：文本必须揭示该作品的具体剧情（结局、人物死亡、重大反转、关键情节）才算命中；仅提及作品名、角色名、评分、出版信息、求推荐、无具体剧情的讨论不算剧透。\n\n' +
+        '- 【剧透屏蔽】：文本只要透露了该作品的剧情信息就算命中，包括剧情走向、结局、人物命运/生死、关键反转、重大伏笔、重要情节细节。\n' +
+        '  以下不算剧透：仅出现作品名或角色名、评分、出版/上映信息、求推荐、纯主观评价（如"很好看/太烂了"）而无任何剧情信息。\n\n' +
         '规则：\n' + ruleLines.join('\n') + '\n\n' +
         '待判定文本：\n' + texts.map(function (t, i) { return '[' + i + '] ' + t; }).join('\n') + '\n\n' +
-        '对每条文本判断命中了哪些规则（命中规则序号从 1 开始）。未命中则 matched 为空数组。\n' +
-        '严格只输出 JSON，不要任何解释：{"results":[{"idx":0,"matched":[1]}]}'
+        '逐条判断命中了哪些规则（规则序号从 1 开始）。命中则把序号放入数组，未命中则为空数组。\n' +
+        '严格只输出如下 JSON，不要任何解释或代码块标记：\n' +
+        '{"results":[{"idx":0,"matched":[1]},{"idx":1,"matched":[]}]}'
     }
   ]);
 
   let results = [];
   try {
-    const parsed = JSON.parse(content);
-    results = Array.isArray(parsed) ? parsed : (parsed.results || []);
+    const parsed = JSON.parse(extractJson(content));
+    results = normalizeResults(parsed, texts.length);
   } catch (e) { return { matched: [] }; }
 
   const matched = [];
-  results.forEach(function (r) {
-    const idx = Number(r && r.idx);
-    const m = Array.isArray(r && r.matched) ? r.matched : [];
-    if (!Number.isInteger(idx) || idx < 0 || idx >= texts.length) return;
-    m.forEach(function (ruleNo) {
-      const ruleIdx = Number(ruleNo) - 1;
-      const rule = rules[ruleIdx];
+  results.forEach(function (item) {
+    if (!item.rules.length) {
+      matched.push({ idx: item.idx, strength: null });
+      return;
+    }
+    item.rules.forEach(function (ruleNo) {
+      const rule = rules[ruleNo - 1];
       if (!rule) return;
-      matched.push({ idx: idx, strength: rule.strength || null });
+      matched.push({ idx: item.idx, strength: rule.strength || null });
     });
   });
 
   return { matched: matched };
+}
+
+// 从模型输出中提取 JSON（兼容代码围栏、前后多余文字）
+function extractJson(s) {
+  let t = String(s || '').trim();
+  const fence = t.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fence) t = fence[1].trim();
+  const start = t.search(/[[{]/);
+  if (start > 0) t = t.slice(start);
+  const end = Math.max(t.lastIndexOf('}'), t.lastIndexOf(']'));
+  if (end !== -1) t = t.slice(0, end + 1);
+  return t;
+}
+
+function toIdxArray(v) {
+  if (v === undefined || v === null) return [];
+  if (Array.isArray(v)) {
+    return v.map(function (x) {
+      if (x && typeof x === 'object') x = x.rule !== undefined ? x.rule : x.ruleNo;
+      return Number(x);
+    }).filter(function (n) { return Number.isInteger(n); });
+  }
+  if (typeof v === 'object') {
+    const n = Number(v.rule !== undefined ? v.rule : v.ruleNo);
+    return Number.isInteger(n) ? [n] : [];
+  }
+  const n = Number(v);
+  return Number.isInteger(n) ? [n] : [];
+}
+
+// 归一化为 [{idx, rules:[规则序号]}]，兼容新旧多种返回格式
+function normalizeResults(parsed, len) {
+  const out = [];
+  const pick = function (obj) {
+    const idx = Number(obj.idx !== undefined ? obj.idx : obj.index);
+    const rules = toIdxArray(obj.matched !== undefined ? obj.matched : obj.rules);
+    if (Number.isInteger(idx) && idx >= 0 && idx < len) out.push({ idx: idx, rules: rules });
+  };
+
+  let list = null;
+  if (Array.isArray(parsed)) list = parsed;
+  else if (parsed && Array.isArray(parsed.results)) list = parsed.results;
+  else if (parsed && Array.isArray(parsed.matched)) list = parsed.matched;
+  if (!list) return out;
+
+  list.forEach(function (item) {
+    if (item && typeof item === 'object') pick(item);
+    else {
+      const idx = Number(item);
+      if (Number.isInteger(idx) && idx >= 0 && idx < len) out.push({ idx: idx, rules: [] });
+    }
+  });
+  return out;
 }
 
 async function testAI(ai) {
