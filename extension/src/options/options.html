@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FaychiAI 设置</title>
+  <link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <h1><span class="dot"></span>FaychiAI 设置</h1>
+      <p>语义级浏览器内容过滤：一次设置，全网站生效</p>
+    </header>
+
+    <section class="card">
+      <h2>通用</h2>
+      <div class="field">
+        <label>总开关</label>
+        <label class="switch">
+          <input type="checkbox" id="enabled" />
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="field">
+        <label>默认屏蔽强度</label>
+        <select id="defaultStrength">
+          <option value="light">轻度 · 半透明遮罩</option>
+          <option value="medium">中度 · 高斯模糊</option>
+          <option value="heavy">重度 · 直接移除</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>屏蔽规则</h2>
+      <p class="hint">关键词/正则本地即时生效；AI 语义需在下方开启并填写 API Key。规则留空强度时使用默认强度。</p>
+
+      <div class="add-form">
+        <select id="newType">
+          <option value="keyword">关键词</option>
+          <option value="regex">正则</option>
+          <option value="ai">AI 语义</option>
+        </select>
+        <input id="newPattern" type="text" placeholder="如：某某电影 / 贩卖焦虑 / 引战" />
+        <select id="newStrength">
+          <option value="">默认强度</option>
+          <option value="light">轻度</option>
+          <option value="medium">中度</option>
+          <option value="heavy">重度</option>
+        </select>
+        <button id="addBtn">添加规则</button>
+      </div>
+
+      <table class="rules-table">
+        <thead>
+          <tr>
+            <th class="c-on">启用</th>
+            <th class="c-type">类型</th>
+            <th>内容</th>
+            <th class="c-strength">强度</th>
+            <th class="c-del"></th>
+          </tr>
+        </thead>
+        <tbody id="ruleRows"></tbody>
+      </table>
+      <div id="empty" class="empty">暂无规则</div>
+    </section>
+
+    <section class="card">
+      <h2>AI 语义识别（可选）</h2>
+      <p class="hint">开启后，未命中关键词的内容会交给大模型做语义判断，可识别暗喻、同义、指代类内容。需使用 OpenAI 兼容接口（DeepSeek / 通义千问 / GLM 等）。</p>
+
+      <div class="field">
+        <label>启用 AI 语义识别</label>
+        <label class="switch">
+          <input type="checkbox" id="aiEnabled" />
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="field">
+        <label>Base URL</label>
+        <input id="aiBaseUrl" type="text" placeholder="https://api.deepseek.com/v1" />
+      </div>
+      <div class="field">
+        <label>API Key</label>
+        <input id="aiApiKey" type="password" placeholder="sk-..." />
+      </div>
+      <div class="field">
+        <label>模型</label>
+        <input id="aiModel" type="text" placeholder="deepseek-chat" />
+      </div>
+      <div class="field">
+        <label></label>
+        <button id="testBtn" class="ghost">测试连接</button>
+        <span id="testResult" class="test-result"></span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>数据</h2>
+      <div class="field">
+        <label>已屏蔽统计</label>
+        <span class="stat-num"><b id="blockedCount">0</b> 条</span>
+      </div>
+      <div class="field">
+        <label>配置导入 / 导出</label>
+        <div class="btn-group">
+          <button id="exportBtn" class="ghost">导出 JSON</button>
+          <button id="importBtn" class="ghost">导入 JSON</button>
+          <input id="importFile" type="file" accept="application/json" hidden />
+          <button id="resetStatsBtn" class="ghost danger">清零统计</button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="foot">FaychiAI v0.1.0 · 本地运行，内容不外传（除开启 AI 语义识别时按需送检）</footer>
+  </div>
+
+  <script src="../shared/constants.js"></script>
+  <script src="../shared/storage.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

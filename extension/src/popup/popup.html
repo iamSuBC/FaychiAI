@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FaychiAI</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header class="hd">
+    <div class="brand"><span class="dot"></span>FaychiAI</div>
+    <label class="switch" title="总开关">
+      <input type="checkbox" id="enabled" />
+      <span class="slider"></span>
+    </label>
+  </header>
+
+  <section class="row">
+    <label class="lbl">默认屏蔽强度</label>
+    <select id="strength">
+      <option value="light">轻度 · 遮罩</option>
+      <option value="medium">中度 · 模糊</option>
+      <option value="heavy">重度 · 移除</option>
+    </select>
+  </section>
+
+  <section class="add">
+    <input id="newPattern" type="text" placeholder="输入屏蔽内容 / 作品名" />
+    <select id="newType">
+      <option value="keyword">关键词</option>
+      <option value="regex">正则</option>
+      <option value="ai">AI 语义</option>
+    </select>
+    <button id="addBtn">添加</button>
+  </section>
+
+  <section class="rules">
+    <div class="rules-hd">
+      <span>屏蔽规则</span>
+      <span id="ruleCount">0</span>
+    </div>
+    <ul id="ruleList"></ul>
+    <div id="empty" class="empty">暂无规则，先添加一条试试</div>
+  </section>
+
+  <footer class="ft">
+    <div class="stat">已屏蔽 <b id="blocked">0</b> 条</div>
+    <a href="#" id="openOptions">设置</a>
+  </footer>
+
+  <div class="ai-status" id="aiStatus"></div>
+
+  <script src="../shared/constants.js"></script>
+  <script src="../shared/storage.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
