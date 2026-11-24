@@ -47,8 +47,7 @@
     });
 
     function syncAliasesField() {
-      const show = elNewType.value === 'ai' || elNewType.value === 'spoiler';
-      elAliasesField.style.display = show ? 'flex' : 'none';
+      elAliasesField.style.display = elNewType.value === 'ai' ? 'flex' : 'none';
     }
     elNewType.addEventListener('change', syncAliasesField);
     syncAliasesField();
@@ -191,7 +190,7 @@
       pattern: pattern,
       strength: elNewStrength.value || null
     };
-    if (elNewType.value === 'ai' || elNewType.value === 'spoiler') {
+    if (elNewType.value === 'ai') {
       const aliases = elNewAliases.value.trim();
       if (aliases) rule.aliases = aliases.split(/[,，、\s]+/).filter(Boolean);
     }

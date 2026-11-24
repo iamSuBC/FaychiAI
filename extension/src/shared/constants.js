@@ -19,8 +19,7 @@
   F.RULE_TYPES = {
     keyword: '关键词',
     regex: '正则',
-    ai: 'AI 语义',
-    spoiler: '剧透屏蔽'
+    ai: 'AI 语义'
   };
 
   F.DEFAULT_SETTINGS = {

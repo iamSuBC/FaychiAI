@@ -34,14 +34,13 @@
 
     <section class="card">
       <h2>屏蔽规则</h2>
-      <p class="hint">关键词/正则本地即时生效；AI 语义与剧透屏蔽需在下方开启 AI 并填写 API Key。剧透屏蔽仅拦截揭示剧情的内容，不会误伤作品名、评分等。规则留空强度时使用默认强度。</p>
+      <p class="hint">关键词/正则本地即时生效；AI 语义需在下方开启 AI 并填写 API Key。AI 语义只拦截实质内容（剧情、讨论等），不会误伤作品名、评分等元数据。规则留空强度时使用默认强度。</p>
 
       <div class="add-form">
         <select id="newType">
           <option value="keyword">关键词</option>
           <option value="regex">正则</option>
           <option value="ai">AI 语义</option>
-          <option value="spoiler">剧透屏蔽</option>
         </select>
         <input id="newPattern" type="text" placeholder="如：某某电影 / 贩卖焦虑 / 引战" />
         <select id="newStrength">
@@ -54,7 +53,7 @@
       </div>
 
       <div class="field" id="aliasesField" style="display:none; margin-top:-6px;">
-        <label>别名 / 角色（选填）</label>
+        <label>别名 / 相关词（选填）</label>
         <input id="newAliases" type="text" placeholder="逗号分隔，如：路明非,楚子航,卡塞尔" />
       </div>
 

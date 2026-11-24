@@ -62,7 +62,7 @@
           return String(t).toLowerCase();
         }).filter(Boolean);
         aiRules.push({
-          type: r.type, pattern: r.pattern,
+          pattern: r.pattern,
           aliases: r.aliases || [], terms: terms, strength: strength
         });
       } else {
@@ -206,7 +206,7 @@
     });
 
     const rulesPayload = aiRules.map(function (r) {
-      return { type: r.type, pattern: r.pattern, aliases: r.aliases, strength: r.strength };
+      return { pattern: r.pattern, aliases: r.aliases, strength: r.strength };
     });
 
     for (let i = 0; i < pending.length; i += MAX_AI_BATCH) {

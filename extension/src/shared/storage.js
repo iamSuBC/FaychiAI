@@ -9,7 +9,8 @@
     const d = F.DEFAULT_SETTINGS;
     const s = Object.assign({}, d, stored || {});
     s.ai = Object.assign({}, d.ai, (stored && stored.ai) || {});
-    s.rules = Array.isArray(stored && stored.rules) ? stored.rules : d.rules.slice();
+    const rawRules = Array.isArray(stored && stored.rules) ? stored.rules : d.rules.slice();
+    s.rules = rawRules.map(normalizeRule);
     delete s.stats;
     return s;
   }
@@ -36,9 +37,10 @@
   }
 
   function normalizeRule(rule) {
+    const type = rule.type === 'spoiler' ? 'ai' : (rule.type || 'keyword');
     return {
       id: rule.id || F.uuid(),
-      type: rule.type || 'keyword',
+      type: type,
       pattern: String(rule.pattern || '').trim(),
       strength: rule.strength || null,
       note: rule.note || '',
