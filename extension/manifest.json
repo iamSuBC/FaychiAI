@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "FaychiAI",
+  "version": "0.1.0",
+  "description": "语义级浏览器内容过滤：一次设置、全网站生效，屏蔽剧透、焦虑、引战等干扰内容。",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "src/background/service-worker.js"
+  },
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_title": "FaychiAI"
+  },
+  "options_page": "src/options/options.html",
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "src/shared/constants.js",
+        "src/shared/storage.js",
+        "src/content/content.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ]
+}
