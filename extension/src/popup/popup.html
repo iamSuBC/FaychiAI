@@ -24,6 +24,17 @@
     </select>
   </section>
 
+  <section class="row" id="siteRow" style="display:none;">
+    <label class="lbl">当前站点</label>
+    <div class="site-ctl">
+      <span id="siteHost" class="site-host"></span>
+      <label class="switch" title="在此站点启用/停用屏蔽">
+        <input type="checkbox" id="siteSwitch" />
+        <span class="slider"></span>
+      </label>
+    </div>
+  </section>
+
   <section class="add">
     <input id="newPattern" type="text" placeholder="输入屏蔽内容 / 作品名" />
     <select id="newType">

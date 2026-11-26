@@ -17,8 +17,12 @@
   const elBlocked = $('blocked');
   const elAiStatus = $('aiStatus');
   const elScopeStatus = $('scopeStatus');
+  const elSiteRow = $('siteRow');
+  const elSiteHost = $('siteHost');
+  const elSiteSwitch = $('siteSwitch');
 
   let settings = null;
+  let currentHost = '';
 
   init();
 
@@ -33,6 +37,32 @@
 
     elStrength.addEventListener('change', function () {
       Storage.updateSettings({ defaultStrength: elStrength.value });
+    });
+
+    elSiteSwitch.addEventListener('change', function () {
+      const turnOn = elSiteSwitch.checked;
+      if (!currentHost) return;
+      const scope = settings.scope || {};
+      const mode = scope.mode || 'all';
+      const sites = (scope.sites || []).slice();
+
+      const toggle = function (list, host, want) {
+        const has = list.indexOf(host) !== -1;
+        if (want && !has) list.push(host);
+        if (!want && has) return list.filter(function (s) { return s !== host; });
+        return list;
+      };
+
+      let next;
+      if (mode === 'all') {
+        // 「所有网站」下关闭当前站点 → 转为「除选中的网站外」并加入该站
+        next = turnOn ? { mode: 'all', sites: [] } : { mode: 'exclude', sites: [currentHost] };
+      } else if (mode === 'include') {
+        next = { mode: 'include', sites: toggle(sites, currentHost, turnOn) };
+      } else {
+        next = { mode: 'exclude', sites: toggle(sites, currentHost, !turnOn) };
+      }
+      Storage.updateSettings({ scope: next });
     });
 
     elAdd.addEventListener('click', addRule);
@@ -134,19 +164,41 @@
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
       const tab = tabs && tabs[0];
       let host = '';
-      try { host = tab && tab.url ? new URL(tab.url).hostname : ''; } catch (e) { host = ''; }
+      let isWeb = false;
+      try {
+        const u = tab && tab.url ? new URL(tab.url) : null;
+        if (u && (u.protocol === 'http:' || u.protocol === 'https:')) {
+          host = u.hostname.replace(/^www\./, '');
+          isWeb = true;
+        } else if (u) {
+          host = u.protocol === 'chrome-extension:' ? '扩展内部页面'
+            : (u.protocol === 'file:' ? '本地文件' : '浏览器内部页面');
+        }
+      } catch (e) { host = ''; }
+
       if (!host) {
         elScopeStatus.textContent = '';
         elScopeStatus.className = 'scope-status';
+        elSiteRow.style.display = 'none';
+        currentHost = '';
         return;
       }
-      if (F.inScope(settings.scope, host)) {
+      if (!isWeb) {
         elScopeStatus.className = 'scope-status';
-        elScopeStatus.textContent = '当前站点已生效：' + host;
-      } else {
-        elScopeStatus.className = 'scope-status off';
-        elScopeStatus.textContent = '当前站点不在生效范围：' + host;
+        elScopeStatus.textContent = '当前为' + host + '，无需屏蔽控制';
+        elSiteRow.style.display = 'none';
+        currentHost = '';
+        return;
       }
+
+      currentHost = F.normalizeDomain ? F.normalizeDomain(host) : host;
+      const active = F.inScope(settings.scope, currentHost);
+      elSiteRow.style.display = 'flex';
+      elSiteHost.textContent = currentHost;
+      elSiteHost.title = currentHost;
+      elSiteSwitch.checked = active;
+      elScopeStatus.className = 'scope-status' + (active ? '' : ' off');
+      elScopeStatus.textContent = active ? '当前站点已生效：' + currentHost : '当前站点已停用：' + currentHost;
     });
   }
 
