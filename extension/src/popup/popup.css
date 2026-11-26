@@ -72,6 +72,58 @@ body {
   white-space: nowrap;
 }
 
+.scope-sec {
+  padding: 10px 14px 12px;
+  border-bottom: 1px solid #1e293b;
+}
+
+.scope-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.scope-title select {
+  font-size: 12px;
+  padding: 4px 6px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.chip {
+  font-size: 12px;
+  color: #cbd5e1;
+  background: #16273f;
+  border: 1px solid #29405f;
+  border-radius: 12px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+
+.chip:hover { border-color: #3b82f6; }
+.chip.on {
+  color: #fff;
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.scope-add {
+  display: flex;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.scope-add input { flex: 1; min-width: 0; font-size: 12px; }
+.scope-add button { font-size: 12px; padding: 6px 12px; }
+
 select, input[type="text"] {
   font-family: inherit;
   font-size: 13px;

@@ -35,6 +35,22 @@
     </div>
   </section>
 
+  <section class="scope-sec">
+    <div class="scope-title">
+      <span>站点范围</span>
+      <select id="scopeMode">
+        <option value="all">所有网站</option>
+        <option value="include">仅选中的网站</option>
+        <option value="exclude">除选中的网站外</option>
+      </select>
+    </div>
+    <div class="chips" id="scopeChips"></div>
+    <div class="scope-add">
+      <input type="text" id="scopeInput" placeholder="自定义网站，如 example.com" />
+      <button id="scopeAddBtn">添加</button>
+    </div>
+  </section>
+
   <section class="add">
     <input id="newPattern" type="text" placeholder="输入屏蔽内容 / 作品名" />
     <select id="newType">

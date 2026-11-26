@@ -20,6 +20,10 @@
   const elSiteRow = $('siteRow');
   const elSiteHost = $('siteHost');
   const elSiteSwitch = $('siteSwitch');
+  const elScopeMode = $('scopeMode');
+  const elScopeChips = $('scopeChips');
+  const elScopeInput = $('scopeInput');
+  const elScopeAddBtn = $('scopeAddBtn');
 
   let settings = null;
   let currentHost = '';
@@ -63,6 +67,16 @@
         next = { mode: 'exclude', sites: toggle(sites, currentHost, !turnOn) };
       }
       Storage.updateSettings({ scope: next });
+    });
+
+    elScopeMode.addEventListener('change', function () {
+      const scope = settings.scope || {};
+      Storage.updateSettings({ scope: { mode: elScopeMode.value, sites: scope.sites || [] } });
+    });
+
+    elScopeAddBtn.addEventListener('click', addCustomSite);
+    elScopeInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') addCustomSite();
     });
 
     elAdd.addEventListener('click', addRule);
@@ -156,7 +170,60 @@
       elAiStatus.textContent = 'AI 语义识别未配置，当前仅关键词/正则生效（可在设置中开启）';
     }
 
+    renderScopeUI();
     renderScopeStatus();
+  }
+
+  function renderScopeUI() {
+    const scope = settings.scope || {};
+    elScopeMode.value = scope.mode || 'all';
+    const sites = scope.sites || [];
+
+    const platformDomains = [];
+    const chips = [];
+    (F.PLATFORMS || []).forEach(function (p) {
+      platformDomains.push.apply(platformDomains, p.domains);
+      chips.push({ label: p.name, domains: p.domains.slice() });
+    });
+    // 平台未覆盖的自定义域名，单独作为标签展示
+    (sites || []).forEach(function (d) {
+      if (platformDomains.indexOf(d) === -1) chips.push({ label: d, domains: [d] });
+    });
+
+    elScopeChips.innerHTML = '';
+    chips.forEach(function (c) {
+      const on = c.domains.every(function (d) { return sites.indexOf(d) !== -1; });
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip' + (on ? ' on' : '');
+      b.textContent = c.label;
+      b.addEventListener('click', function () {
+        const scope = settings.scope || {};
+        const cur = (scope.sites || []).slice();
+        if (on) {
+          c.domains.forEach(function (d) {
+            const i = cur.indexOf(d);
+            if (i !== -1) cur.splice(i, 1);
+          });
+        } else {
+          c.domains.forEach(function (d) {
+            if (cur.indexOf(d) === -1) cur.push(d);
+          });
+        }
+        Storage.updateSettings({ scope: { mode: scope.mode || 'all', sites: cur } });
+      });
+      elScopeChips.appendChild(b);
+    });
+  }
+
+  async function addCustomSite() {
+    const d = F.normalizeDomain(elScopeInput.value);
+    if (!d) return;
+    const scope = settings.scope || {};
+    const cur = (scope.sites || []).slice();
+    if (cur.indexOf(d) === -1) cur.push(d);
+    await Storage.updateSettings({ scope: { mode: scope.mode || 'all', sites: cur } });
+    elScopeInput.value = '';
   }
 
   function renderScopeStatus() {
