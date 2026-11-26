@@ -36,9 +36,20 @@
     compile();
     injectStyles();
     listen();
-    if (settings.enabled && hasRules()) {
+    refresh();
+  }
+
+  function isActive() {
+    return settings.enabled && hasRules() && F.inScope(settings.scope, location.hostname);
+  }
+
+  function refresh() {
+    resetAll();
+    if (isActive()) {
       scheduleFullScan();
       startObserver();
+    } else {
+      stopObserver();
     }
   }
 
@@ -76,11 +87,7 @@
       if (area !== 'local' || !changes[F.KEYS.SETTINGS]) return;
       settings = Storage.mergeDefaults(changes[F.KEYS.SETTINGS].newValue);
       compile();
-      resetAll();
-      if (settings.enabled && hasRules()) {
-        scheduleFullScan();
-        startObserver();
-      }
+      refresh();
     });
   }
 
@@ -352,6 +359,18 @@
       }
     });
     observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  function stopObserver() {
+    if (observer) {
+      observer.disconnect();
+      observer = null;
+    }
+    moQueue = [];
+    if (moTimer) {
+      clearTimeout(moTimer);
+      moTimer = null;
+    }
   }
 
   function processQueue() {

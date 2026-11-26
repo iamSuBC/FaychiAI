@@ -33,6 +33,35 @@
     </section>
 
     <section class="card">
+      <h2>站点范围</h2>
+      <p class="hint">控制 FaychiAI 在哪些网站生效。默认「所有网站」；选「仅选中的网站」可只在指定平台过滤，选「除选中的网站外」可在指定平台暂停。</p>
+      <div class="field">
+        <label>生效方式</label>
+        <select id="scopeMode">
+          <option value="all">所有网站</option>
+          <option value="include">仅选中的网站</option>
+          <option value="exclude">除选中的网站外</option>
+        </select>
+      </div>
+
+      <div id="scopeSites" style="display:none;">
+        <div class="field">
+          <label>常用平台</label>
+          <div id="platformChips" class="chips"></div>
+        </div>
+        <div class="field">
+          <label>自定义网站</label>
+          <input id="newSite" type="text" placeholder="如：example.com" />
+          <button id="addSiteBtn" class="ghost">添加</button>
+        </div>
+        <div class="field">
+          <label>已选网站</label>
+          <div id="siteList" class="chips"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
       <h2>屏蔽规则</h2>
       <p class="hint">关键词/正则本地即时生效；AI 语义需在下方开启 AI 并填写 API Key。AI 语义只拦截实质内容（剧情、讨论等），不会误伤作品名、评分等元数据。规则留空强度时使用默认强度。</p>
 

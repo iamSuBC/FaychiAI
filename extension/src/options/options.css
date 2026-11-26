@@ -137,3 +137,18 @@ button.ghost.danger:hover { background: #fee2e2; }
 .stat-num b { color: #3b82f6; font-size: 16px; }
 
 .foot { text-align: center; color: #94a3b8; font-size: 12px; margin-top: 26px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; align-items: center; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: 999px;
+  font-size: 12.5px; cursor: pointer; user-select: none;
+  background: #f1f5f9; border: 1px solid #e2e8f0; color: #475569;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.chip:hover { border-color: #bfdbfe; background: #eff6ff; }
+.chip.active { background: #3b82f6; border-color: #3b82f6; color: #fff; }
+.chip.active:hover { background: #2563eb; border-color: #2563eb; }
+.chip .x { font-size: 14px; line-height: 1; opacity: .8; }
+.chip .x:hover { opacity: 1; }
+.chips-empty { color: #94a3b8; font-size: 12.5px; }

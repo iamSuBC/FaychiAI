@@ -9,6 +9,8 @@
     const d = F.DEFAULT_SETTINGS;
     const s = Object.assign({}, d, stored || {});
     s.ai = Object.assign({}, d.ai, (stored && stored.ai) || {});
+    s.scope = Object.assign({}, d.scope, (stored && stored.scope) || {});
+    s.scope.sites = Array.isArray(s.scope.sites) ? s.scope.sites : [];
     const rawRules = Array.isArray(stored && stored.rules) ? stored.rules : d.rules.slice();
     s.rules = rawRules.map(normalizeRule);
     delete s.stats;

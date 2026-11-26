@@ -16,6 +16,13 @@
   const elRows = $('ruleRows');
   const elEmpty = $('empty');
 
+  const elScopeMode = $('scopeMode');
+  const elScopeSites = $('scopeSites');
+  const elPlatformChips = $('platformChips');
+  const elNewSite = $('newSite');
+  const elAddSite = $('addSiteBtn');
+  const elSiteList = $('siteList');
+
   const elAiEnabled = $('aiEnabled');
   const elAiBaseUrl = $('aiBaseUrl');
   const elAiApiKey = $('aiApiKey');
@@ -39,6 +46,14 @@
     });
     elStrength.addEventListener('change', function () {
       Storage.updateSettings({ defaultStrength: elStrength.value });
+    });
+
+    elScopeMode.addEventListener('change', function () {
+      updateScope({ mode: elScopeMode.value });
+    });
+    elAddSite.addEventListener('click', addSite);
+    elNewSite.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') addSite();
     });
 
     elAdd.addEventListener('click', addRule);
@@ -93,7 +108,85 @@
     elAiApiKey.value = settings.ai.apiKey || '';
     elAiModel.value = settings.ai.model || '';
 
+    renderScope();
     renderRules();
+  }
+
+  function currentScope() {
+    const sc = settings.scope || { mode: 'all', sites: [] };
+    return { mode: sc.mode || 'all', sites: Array.isArray(sc.sites) ? sc.sites.slice() : [] };
+  }
+
+  function updateScope(patch) {
+    Storage.updateSettings({ scope: Object.assign(currentScope(), patch) });
+  }
+
+  function togglePlatform(p) {
+    const scope = currentScope();
+    const allOn = p.domains.every(function (d) { return scope.sites.indexOf(d) !== -1; });
+    if (allOn) {
+      scope.sites = scope.sites.filter(function (d) { return p.domains.indexOf(d) === -1; });
+    } else {
+      p.domains.forEach(function (d) { if (scope.sites.indexOf(d) === -1) scope.sites.push(d); });
+    }
+    Storage.updateSettings({ scope: scope });
+  }
+
+  function addSite() {
+    const d = F.normalizeDomain(elNewSite.value);
+    if (!d) return;
+    const scope = currentScope();
+    if (scope.sites.indexOf(d) === -1) scope.sites.push(d);
+    elNewSite.value = '';
+    Storage.updateSettings({ scope: scope });
+  }
+
+  function removeSite(d) {
+    const scope = currentScope();
+    scope.sites = scope.sites.filter(function (x) { return x !== d; });
+    Storage.updateSettings({ scope: scope });
+  }
+
+  function renderScope() {
+    const scope = currentScope();
+    elScopeMode.value = scope.mode;
+    elScopeSites.style.display = scope.mode === 'all' ? 'none' : 'block';
+
+    elPlatformChips.innerHTML = '';
+    F.PLATFORMS.forEach(function (p) {
+      const on = p.domains.every(function (d) { return scope.sites.indexOf(d) !== -1; });
+      const chip = document.createElement('span');
+      chip.className = 'chip' + (on ? ' active' : '');
+      chip.textContent = p.name;
+      chip.addEventListener('click', function () { togglePlatform(p); });
+      elPlatformChips.appendChild(chip);
+    });
+
+    elSiteList.innerHTML = '';
+    if (!scope.sites.length) {
+      const none = document.createElement('span');
+      none.className = 'chips-empty';
+      none.textContent = '暂无，请勾选上方平台或添加自定义网站';
+      elSiteList.appendChild(none);
+      return;
+    }
+    scope.sites.forEach(function (d) {
+      const chip = document.createElement('span');
+      chip.className = 'chip active';
+      const txt = document.createElement('span');
+      txt.textContent = d;
+      const x = document.createElement('span');
+      x.className = 'x';
+      x.textContent = '×';
+      x.title = '移除';
+      x.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        removeSite(d);
+      });
+      chip.appendChild(txt);
+      chip.appendChild(x);
+      elSiteList.appendChild(chip);
+    });
   }
 
   function renderRules() {

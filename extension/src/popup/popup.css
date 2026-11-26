@@ -161,3 +161,10 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   color: #64748b;
 }
 .ai-status.warn { color: #fbbf24; }
+
+.scope-status {
+  padding: 10px 14px 0;
+  font-size: 11px;
+  color: #64748b;
+}
+.scope-status.off { color: #fbbf24; }
