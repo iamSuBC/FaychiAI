@@ -80,6 +80,12 @@ select:focus, input[type="text"]:focus { border-color: #3b82f6; }
 
 .add input { width: 100%; }
 
+.add-aliases {
+  padding: 0 14px 10px;
+  border-bottom: 1px solid #1e293b;
+}
+.add-aliases input { width: 100%; }
+
 button {
   font-family: inherit;
   font-size: 13px;

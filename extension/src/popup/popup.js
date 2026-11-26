@@ -8,6 +8,8 @@
   const elStrength = $('strength');
   const elPattern = $('newPattern');
   const elType = $('newType');
+  const elAliases = $('newAliases');
+  const elAddAliases = $('addAliases');
   const elAdd = $('addBtn');
   const elList = $('ruleList');
   const elCount = $('ruleCount');
@@ -37,6 +39,15 @@
     elPattern.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') addRule();
     });
+    elAliases.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') addRule();
+    });
+
+    function syncAliases() {
+      elAddAliases.style.display = elType.value === 'ai' ? 'block' : 'none';
+    }
+    elType.addEventListener('change', syncAliases);
+    syncAliases();
 
     $('openOptions').addEventListener('click', function (e) {
       e.preventDefault();
@@ -83,6 +94,9 @@
       span.className = 'rule-pattern';
       span.textContent = rule.pattern;
       span.title = rule.pattern;
+      if (rule.aliases && rule.aliases.length) {
+        span.title = rule.pattern + '（别名：' + rule.aliases.join('、') + '）';
+      }
 
       const tag = document.createElement('span');
       tag.className = 'rule-tag';
@@ -139,7 +153,13 @@
   async function addRule() {
     const pattern = elPattern.value.trim();
     if (!pattern) return;
-    await Storage.addRule({ type: elType.value, pattern: pattern });
+    const rule = { type: elType.value, pattern: pattern };
+    if (elType.value === 'ai') {
+      const aliases = elAliases.value.trim();
+      if (aliases) rule.aliases = aliases.split(/[,，、\s]+/).filter(Boolean);
+    }
+    await Storage.addRule(rule);
     elPattern.value = '';
+    elAliases.value = '';
   }
 })();
