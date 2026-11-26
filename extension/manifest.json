@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "FaychiAI",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "语义级浏览器内容过滤：一次设置、全网站生效，屏蔽剧透、焦虑、引战等干扰内容。",
-  "permissions": ["storage", "activeTab"],
+  "permissions": ["storage", "tabs"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "src/background/service-worker.js"

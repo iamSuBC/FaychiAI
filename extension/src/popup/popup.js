@@ -177,8 +177,8 @@
       } catch (e) { host = ''; }
 
       if (!host) {
-        elScopeStatus.textContent = '';
-        elScopeStatus.className = 'scope-status';
+        elScopeStatus.className = 'scope-status off';
+        elScopeStatus.textContent = '无法读取当前页面地址，请在普通网页上打开弹窗';
         elSiteRow.style.display = 'none';
         currentHost = '';
         return;
